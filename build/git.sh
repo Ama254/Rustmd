@@ -2,11 +2,10 @@
 
 set -e
 
-# Ask user for commit message with default fallback
 read -p "📝 Commit message (default: 'update'): " COMMIT_MSG
 COMMIT_MSG=${COMMIT_MSG:-update}
 
-# Get current Git branch
+
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 echo "📂 Staging all changes..."

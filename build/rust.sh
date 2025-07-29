@@ -9,7 +9,8 @@ if ! command -v rustup >/dev/null 2>&1; then
 else
   echo "✅ Rust is already installed."
 fi
-
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 # Add Rust to PATH in shell profiles
 echo "🛠️ Ensuring Rust is in your PATH..."
 CARGO_PATH='export PATH="$HOME/.cargo/bin:$PATH"'

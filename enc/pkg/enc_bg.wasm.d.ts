@@ -1,0 +1,33 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const __wbg_securebytes_free: (a: number, b: number) => void;
+export const __wbg_cryptoservice_free: (a: number, b: number) => void;
+export const __wbg_config_free: (a: number, b: number) => void;
+export const __wbg_batchresult_free: (a: number, b: number) => void;
+export const __wbg_streamstate_free: (a: number, b: number) => void;
+export const batchresult_new: (a: number, b: number, c: number, d: number) => number;
+export const batchresult_successes: (a: number) => [number, number];
+export const batchresult_errors: (a: number) => [number, number];
+export const config_new: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
+export const securebytes_new: (a: any) => number;
+export const securebytes_random: (a: number) => [number, number, number];
+export const securebytes_data: (a: number) => any;
+export const streamstate_processed_bytes: (a: number) => number;
+export const cryptoservice_new: (a: any, b: number) => [number, number, number];
+export const cryptoservice_encrypt: (a: number, b: any, c: any, d: number) => [number, number, number];
+export const cryptoservice_decrypt: (a: number, b: any, c: any, d: number) => [number, number, number];
+export const cryptoservice_batch_encrypt: (a: number, b: number, c: number, d: any, e: number, f: number, g: number) => [number, number, number];
+export const cryptoservice_batch_decrypt: (a: number, b: number, c: number, d: any, e: number, f: number, g: number) => [number, number, number];
+export const cryptoservice_init_stream_encrypt: (a: number) => [number, number, number];
+export const cryptoservice_stream_encrypt_chunk: (a: number, b: number, c: any, d: any, e: number, f: number, g: number) => [number, number, number];
+export const cryptoservice_estimate_encrypted_size: (a: number, b: number) => number;
+export const __wbindgen_exn_store: (a: number) => void;
+export const __externref_table_alloc: () => number;
+export const __wbindgen_export_2: WebAssembly.Table;
+export const __wbindgen_malloc: (a: number, b: number) => number;
+export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+export const __externref_drop_slice: (a: number, b: number) => void;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __externref_table_dealloc: (a: number) => void;
+export const __wbindgen_start: () => void;

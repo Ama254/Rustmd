@@ -1,0 +1,2 @@
+   Compiling enc v0.1.0 (/workspaces/Rustmd/enc)
+    Finished `release` profile [optimized] target(s) in 1.61s

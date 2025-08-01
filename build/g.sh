@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Debugging version with more output
-set -x  # This will print each command being executed
+LOG_FILE="gitlog.txt"
+exec > >(tee -a "$LOG_FILE") 2>&1
+set -x  # Show each command being run
 
-# Function to check if files exist in git
 check_files_in_git() {
     echo -e "\n\033[1;36m=== Checking git status ===\033[0m"
     git status
@@ -11,7 +11,6 @@ check_files_in_git() {
     git ls-files
 }
 
-# Main workflow
 read -p "Commit message (default: 'update'): " COMMIT_MSG
 COMMIT_MSG=${COMMIT_MSG:-update}
 
@@ -63,8 +62,6 @@ if git push origin "$BRANCH"; then
     fi
 else
     echo -e "\n\033[1;31mPush failed! Trying to diagnose...\033[0m"
-    
-    # Check if we need to set upstream
     if git push origin "$BRANCH" 2>&1 | grep -q 'has no upstream branch'; then
         echo -e "\033[1;33mSetting upstream branch...\033[0m"
         git push --set-upstream origin "$BRANCH"
@@ -75,6 +72,5 @@ else
     fi
 fi
 
-# Final verification
 echo -e "\n\033[1;36m=== Final verification ===\033[0m"
 check_files_in_git

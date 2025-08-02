@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM Crypto Module Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">WASM Crypto Module Demo</h1>
+            <p class="text-gray-600">Testing all functions of the Rust WASM encryption module</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Configuration Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                    <i class='bx bx-cog mr-2'></i> Configuration
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Encryption Algorithm</label>
+                        <select id="algorithm" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="Aes256Gcm">AES-256-GCM</option>
+                            <option value="Aes128Gcm">AES-128-GCM</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">KDF Algorithm</label>
+                        <select id="kdfAlgorithm" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="Argon2">Argon2</option>
+                            <option value="Pbkdf2">PBKDF2</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Time Cost</label>
+                            <input id="kdfTimeCost" type="number" value="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Memory Cost (KB)</label>
+                            <input id="kdfMemCost" type="number" value="65536" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Parallelism</label>
+                            <input id="kdfParallelism" type="number" value="4" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Key Version</label>
+                        <input id="keyVersion" type="number" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Master Key</label>
+                        <input id="masterKey" type="password" value="super-secret-key" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Context</label>
+                        <input id="context" type="text" value="app-context" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Additional Authenticated Data (AAD)</label>
+                        <input id="aad" type="text" value="extra-data" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <button id="initService" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Initialize Crypto Service
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Status Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                    <i class='bx bx-info-circle mr-2'></i> Service Status
+                </h2>
+                
+                <div id="serviceStatus" class="p-4 bg-gray-50 rounded-md mb-4">
+                    <p class="text-gray-600">Crypto service not initialized</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Input Data</label>
+                        <textarea id="inputData" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">Sample data to encrypt</textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="encryptBtn" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50" disabled>
+                            <i class='bx bx-lock-alt mr-1'></i> Encrypt
+                        </button>
+                        <button id="decryptBtn" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50" disabled>
+                            <i class='bx bx-lock-open-alt mr-1'></i> Decrypt
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Result</label>
+                        <textarea id="resultData" rows="4" readonly class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"></textarea>
+                    </div>
+                    
+                    <div id="progressContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Progress</label>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p id="progressText" class="text-sm text-gray-600 mt-1">0%</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Batch Operations Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                    <i class='bx bx-layer mr-2'></i> Batch Operations
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Number of Items</label>
+                        <input id="batchItemCount" type="number" value="5" min="1" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="batchEncryptBtn" class="bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50" disabled>
+                            <i class='bx bx-lock-alt mr-1'></i> Batch Encrypt
+                        </button>
+                        <button id="batchDecryptBtn" class="bg-pink-600 text-white py-2 px-4 rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50" disabled>
+                            <i class='bx bx-lock-open-alt mr-1'></i> Batch Decrypt
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Batch Results</label>
+                        <div id="batchResults" class="p-4 bg-gray-50 rounded-md h-40 overflow-y-auto">
+                            <p class="text-gray-600">No batch operations performed yet</p>
+                        </div>
+                    </div>
+                    
+                    <div id="batchProgressContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Batch Progress</label>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="batchProgressBar" class="bg-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p id="batchProgressText" class="text-sm text-gray-600 mt-1">0%</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stream Operations Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                    <i class='bx bx-transfer mr-2'></i> Stream Operations
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stream Data (chunk size: 10 bytes)</label>
+                        <textarea id="streamData" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">This is a test of streaming encryption. The data will be processed in chunks.</textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="initStreamBtn" class="bg-teal-600 text-white py-2 px-4 rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50" disabled>
+                            <i class='bx bx-play-circle mr-1'></i> Init Stream
+                        </button>
+                        <button id="processStreamBtn" class="bg-amber-600 text-white py-2 px-4 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50" disabled>
+                            <i class='bx bx-run mr-1'></i> Process Stream
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stream Result</label>
+                        <textarea id="streamResult" rows="4" readonly class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"></textarea>
+                    </div>
+                    
+                    <div id="streamProgressContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stream Progress</label>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="streamProgressBar" class="bg-teal-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p id="streamProgressText" class="text-sm text-gray-600 mt-1">Processed 0 bytes</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- IndexedDB Storage Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                    <i class='bx bx-data mr-2'></i> IndexedDB Storage
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="saveToDbBtn" class="bg-yellow-600 text-white py-2 px-4 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50" disabled>
+                            <i class='bx bx-save mr-1'></i> Save to DB
+                        </button>
+                        <button id="loadFromDbBtn" class="bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50" disabled>
+                            <i class='bx bx-folder-open mr-1'></i> Load from DB
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Storage Key</label>
+                        <input id="storageKey" type="text" value="encrypted_data" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">DB Status</label>
+                        <div id="dbStatus" class="p-4 bg-gray-50 rounded-md">
+                            <p class="text-gray-600">IndexedDB not accessed yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Utility Functions Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                    <i class='bx bx-wrench mr-2'></i> Utility Functions
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Random Bytes Length</label>
+                        <input id="randomBytesLength" type="number" value="32" min="1" max="1024" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <button id="generateRandomBtn" class="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        <i class='bx bx-shuffle mr-1'></i> Generate Random Bytes
+                    </button>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Random Bytes (hex)</label>
+                        <textarea id="randomBytesResult" rows="2" readonly class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Size Estimation</label>
+                        <div class="flex items-center space-x-2">
+                            <input id="sizeEstimateInput" type="number" value="100" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <button id="estimateSizeBtn" class="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                Estimate
+                            </button>
+                        </div>
+                        <p id="sizeEstimateResult" class="mt-2 text-sm text-gray-600">Estimated encrypted size: -</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let cryptoService = null;
+        let streamState = null;
+        let db = null;
+        
+        // Initialize IndexedDB
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('CryptoDemoDB', 1);
+                
+                request.onerror = (event) => {
+                    updateDbStatus('Error opening database', 'error');
+                    reject('Database error: ' + event.target.errorCode);
+                };
+                
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    updateDbStatus('Database opened successfully', 'success');
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('encryptedData')) {
+                        db.createObjectStore('encryptedData', { keyPath: 'key' });
+                    }
+                };
+            });
+        }
+        
+        // Update DB status display
+        function updateDbStatus(message, type = 'info') {
+            const dbStatus = document.getElementById('dbStatus');
+            let colorClass = 'text-gray-600';
+            
+            if (type === 'success') colorClass = 'text-green-600';
+            else if (type === 'error') colorClass = 'text-red-600';
+            
+            dbStatus.innerHTML = `<p class="${colorClass}">${message}</p>`;
+        }
+        
+        // Save data to IndexedDB
+        async function saveToDb(key, data) {
+            if (!db) {
+                updateDbStatus('Database not initialized', 'error');
+                return false;
+            }
+            
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['encryptedData'], 'readwrite');
+                const store = transaction.objectStore('encryptedData');
+                
+                const request = store.put({ key, data });
+                
+                request.onsuccess = () => {
+                    updateDbStatus(`Data saved with key: ${key}`, 'success');
+                    resolve(true);
+                };
+                
+                request.onerror = (event) => {
+                    updateDbStatus('Error saving data: ' + event.target.error, 'error');
+                    reject(false);
+                };
+            });
+        }
+        
+        // Load data from IndexedDB
+        async function loadFromDb(key) {
+            if (!db) {
+                updateDbStatus('Database not initialized', 'error');
+                return null;
+            }
+            
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['encryptedData'], 'readonly');
+                const store = transaction.objectStore('encryptedData');
+                
+                const request = store.get(key);
+                
+                request.onsuccess = () => {
+                    if (request.result) {
+                        updateDbStatus(`Data loaded for key: ${key}`, 'success');
+                        resolve(request.result.data);
+                    } else {
+                        updateDbStatus(`No data found for key: ${key}`, 'error');
+                        resolve(null);
+                    }
+                };
+                
+                request.onerror = (event) => {
+                    updateDbStatus('Error loading data: ' + event.target.error, 'error');
+                    reject(null);
+                };
+            });
+        }
+        
+        // Convert string to Uint8Array
+        function strToUint8Array(str) {
+            return new TextEncoder().encode(str);
+        }
+        
+        // Convert Uint8Array to string
+        function uint8ArrayToStr(array) {
+            return new TextDecoder().decode(array);
+        }
+        
+        // Convert Uint8Array to hex string
+        function uint8ArrayToHex(array) {
+            return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        // Convert hex string to Uint8Array
+        function hexToUint8Array(hex) {
+            return new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        }
+        
+        // Update service status display
+        function updateServiceStatus(message, type = 'info') {
+            const statusElement = document.getElementById('serviceStatus');
+            let colorClass = 'text-gray-600';
+            
+            if (type === 'success') colorClass = 'text-green-600';
+            else if (type === 'error') colorClass = 'text-red-600';
+            
+            statusElement.innerHTML = `<p class="${colorClass}">${message}</p>`;
+        }
+        
+        // Update progress bar
+        function updateProgress(progressId, textId, progress) {
+            const progressBar = document.getElementById(progressId);
+            const progressText = document.getElementById(textId);
+            
+            const percentage = Math.round(progress * 100);
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${percentage}%`;
+        }
+        
+        // Initialize the application
+        async function initApp() {
+            try {
+                // Initialize IndexedDB
+                await initIndexedDB();
+                
+                // Set up event listeners
+                document.getElementById('initService').addEventListener('click', initCryptoService);
+                document.getElementById('encryptBtn').addEventListener('click', encryptData);
+                document.getElementById('decryptBtn').addEventListener('click', decryptData);
+                document.getElementById('batchEncryptBtn').addEventListener('click', batchEncrypt);
+                document.getElementById('batchDecryptBtn').addEventListener('click', batchDecrypt);
+                document.getElementById('initStreamBtn').addEventListener('click', initStream);
+                document.getElementById('processStreamBtn').addEventListener('click', processStream);
+                document.getElementById('saveToDbBtn').addEventListener('click', saveToDatabase);
+                document.getElementById('loadFromDbBtn').addEventListener('click', loadFromDatabase);
+                document.getElementById('generateRandomBtn').addEventListener('click', generateRandomBytes);
+                document.getElementById('estimateSizeBtn').addEventListener('click', estimateEncryptedSize);
+                
+                console.log('Application initialized');
+            } catch (error) {
+                console.error('Initialization error:', error);
+                updateServiceStatus('Initialization error: ' + error, 'error');
+            }
+        }
+        
+        // Initialize crypto service
+        async function initCryptoService() {
+            try {
+                const algorithm = document.getElementById('algorithm').value;
+                const kdfAlgorithm = document.getElementById('kdfAlgorithm').value;
+                const kdfTimeCost = parseInt(document.getElementById('kdfTimeCost').value);
+                const kdfMemCost = parseInt(document.getElementById('kdfMemCost').value);
+                const kdfParallelism = parseInt(document.getElementById('kdfParallelism').value);
+                const keyVersion = parseInt(document.getElementById('keyVersion').value);
+                const masterKey = document.getElementById('masterKey').value;
+                
+                // Create config object
+                const config = new Config(
+                    kdfTimeCost,
+                    kdfMemCost,
+                    kdfParallelism,
+                    EncryptionAlgorithm[algorithm],
+                    KdfAlgorithm[kdfAlgorithm],
+                    keyVersion
+                );
+                
+                // Convert master key to Uint8Array
+                const masterKeyBytes = strToUint8Array(masterKey);
+                
+                // Initialize crypto service
+                cryptoService = await CryptoService.new(masterKeyBytes, config);
+                
+                // Enable buttons
+                document.getElementById('encryptBtn').disabled = false;
+                document.getElementById('decryptBtn').disabled = false;
+                document.getElementById('batchEncryptBtn').disabled = false;
+                document.getElementById('batchDecryptBtn').disabled = false;
+                document.getElementById('initStreamBtn').disabled = false;
+                document.getElementById('saveToDbBtn').disabled = false;
+                document.getElementById('loadFromDbBtn').disabled = false;
+                
+                updateServiceStatus(`Crypto service initialized with ${algorithm}, ${kdfAlgorithm}`, 'success');
+                console.log('Crypto service initialized:', cryptoService);
+            } catch (error) {
+                console.error('Error initializing crypto service:', error);
+                updateServiceStatus('Error initializing crypto service: ' + error, 'error');
+            }
+        }
+        
+        // Encrypt data
+        async function encryptData() {
+            if (!cryptoService) {
+                updateServiceStatus('Crypto service not initialized', 'error');
+                return;
+            }
+            
+            try {
+                const inputData = document.getElementById('inputData').value;
+                const context = document.getElementById('context').value;
+                const aad = document.getElementById('aad').value;
+                
+                // Convert to Uint8Array
+                const inputBytes = strToUint8Array(inputData);
+                const contextBytes = strToUint8Array(context);
+                const aadBytes = aad ? strToUint8Array(aad) : null;
+                
+                // Show progress container
+                document.getElementById('progressContainer').classList.remove('hidden');
+                
+                // Encrypt with progress callback
+                const ciphertext = await cryptoService.encrypt(
+                    inputBytes,
+                    contextBytes,
+                    aadBytes,
+                    (progress) => {
+                        updateProgress('progressBar', 'progressText', progress / 100);
+                    }
+                );
+                
+                // Display result as hex
+                document.getElementById('resultData').value = uint8ArrayToHex(ciphertext);
+                updateServiceStatus('Encryption successful', 'success');
+            } catch (error) {
+                console.error('Encryption error:', error);
+                document.getElementById('resultData').value = 'Error: ' + error;
+                updateServiceStatus('Encryption failed: ' + error, 'error');
+            }
+        }
+        
+        // Decrypt data
+        async function decryptData() {
+            if (!cryptoService) {
+                updateServiceStatus('Crypto service not initialized', 'error');
+                return;
+            }
+            
+            try {
+                const inputData = document.getElementById('inputData').value;
+                const context = document.getElementById('context').value;
+                const aad = document.getElementById('aad').value;
+                
+                // Convert to Uint8Array
+                let inputBytes;
+                try {
+                    // Try to parse as hex first
+                    inputBytes = hexToUint8Array(inputData);
+                } catch {
+                    // If not hex, treat as raw data
+                    inputBytes = strToUint8Array(inputData);
+                }
+                
+                const contextBytes = strToUint8Array(context);
+                const aadBytes = aad ? strToUint8Array(aad) : null;
+                
+                // Show progress container
+                document.getElementById('progressContainer').classList.remove('hidden');
+                
+                // Decrypt with progress callback
+                const plaintext = await cryptoService.decrypt(
+                    inputBytes,
+                    contextBytes,
+                    aadBytes,
+                    (progress) => {
+                        updateProgress('progressBar', 'progressText', progress / 100);
+                    }
+                );
+                
+                // Display result as string
+                document.getElementById('resultData').value = uint8ArrayToStr(plaintext);
+                updateServiceStatus('Decryption successful', 'success');
+            } catch (error) {
+                console.error('Decryption error:', error);
+                document.getElementById('resultData').value = 'Error: ' + error;
+                updateServiceStatus('Decryption failed: ' + error, 'error');
+            }
+        }
+        
+        // Batch encrypt
+        async function batchEncrypt() {
+            if (!cryptoService) {
+                updateServiceStatus('Crypto service not initialized', 'error');
+                return;
+            }
+            
+            try {
+                const itemCount = parseInt(document.getElementById('batchItemCount').value);
+                const context = document.getElementById('context').value;
+                const aad = document.getElementById('aad').value;
+                
+                // Generate random data items
+                const dataItems = [];
+                for (let i = 0; i < itemCount; i++) {
+                    const randomData = `Item ${i + 1}: ${Math.random().toString(36).substring(2)}`;
+                    dataItems.push(strToUint8Array(randomData));
+                }
+                
+                // Convert to Uint8Array
+                const contextBytes = strToUint8Array(context);
+                const aadBytes = aad ? strToUint8Array(aad) : null;
+                
+                // Show progress container
+                document.getElementById('batchProgressContainer').classList.remove('hidden');
+                const batchResultsElement = document.getElementById('batchResults');
+                batchResultsElement.innerHTML = '<p class="text-gray-600">Processing batch encryption...</p>';
+                
+                // Batch encrypt with progress callback
+                const result = await cryptoService.batch_encrypt(
+                    dataItems,
+                    contextBytes,
+                    aadBytes,
+                    (progress) => {
+                        updateProgress('batchProgressBar', 'batchProgressText', progress / 100);
+                    },
+                    1024 * 1024 // 1MB memory limit
+                );
+                
+                // Display results
+                let successCount = result.successes.length;
+                let errorCount = result.errors.length;
+                
+                let html = `<p class="text-green-600">Successfully encrypted ${successCount} items</p>`;
+                
+                if (errorCount > 0) {
+                    html += `<p class="text-red-600">Failed to encrypt ${errorCount} items</p>`;
+                    html += '<ul class="mt-2 text-sm text-red-600">';
+                    result.errors.forEach(error => {
+                        html += `<li class="truncate">${error}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                batchResultsElement.innerHTML = html;
+                updateServiceStatus(`Batch encryption completed: ${successCount} success, ${errorCount} errors`, 
+                                    errorCount > 0 ? 'error' : 'success');
+            } catch (error) {
+                console.error('Batch encryption error:', error);
+                document.getElementById('batchResults').innerHTML = 
+                    `<p class="text-red-600">Batch encryption failed: ${error}</p>`;
+                updateServiceStatus('Batch encryption failed: ' + error, 'error');
+            }
+        }
+        
+        // Batch decrypt
+        async function batchDecrypt() {
+            if (!cryptoService) {
+                updateServiceStatus('Crypto service not initialized', 'error');
+                return;
+            }
+            
+            try {
+                const itemCount = parseInt(document.getElementById('batchItemCount').value);
+                const context = document.getElementById('context').value;
+                const aad = document.getElementById('aad').value;
+                
+                // Generate encrypted data items (we'll encrypt first, then decrypt)
+                const contextBytes = strToUint8Array(context);
+                const aadBytes = aad ? strToUint8Array(aad) : null;
+                
+                const dataItems = [];
+                for (let i = 0; i < itemCount; i++) {
+                    const randomData = `Item ${i + 1}: ${Math.random().toString(36).substring(2)}`;
+                    const encrypted = await cryptoService.encrypt(
+                        strToUint8Array(randomData),
+                        contextBytes,
+                        aadBytes
+                    );
+                    dataItems.push(encrypted);
+                }
+                
+                // Show progress container
+                document.getElementById('batchProgressContainer').classList.remove('hidden');
+                const batchResultsElement = document.getElementById('batchResults');
+                batchResultsElement.innerHTML = '<p class="text-gray-600">Processing batch decryption...</p>';
+                
+                // Batch decrypt with progress callback
+                const result = await cryptoService.batch_decrypt(
+                    dataItems,
+                    contextBytes,
+                    aadBytes,
+                    (progress) => {
+                        updateProgress('batchProgressBar', 'batchProgressText', progress / 100);
+                    },
+                    1024 * 1024 // 1MB memory limit
+                );
+                
+                // Display results
+                let successCount = result.successes.length;
+                let errorCount = result.errors.length;
+                
+                let html = `<p class="text-green-600">Successfully decrypted ${successCount} items</p>`;
+                
+                if (errorCount > 0) {
+                    html += `<p class="text-red-600">Failed to decrypt ${errorCount} items</p>`;
+                    html += '<ul class="mt-2 text-sm text-red-600">';
+                    result.errors.forEach(error => {
+                        html += `<li class="truncate">${error}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                // Show first few decrypted items as example
+                if (successCount > 0) {
+                    html += '<div class="mt-4 p-2 bg-gray-100 rounded">';
+                    html += '<p class="text-sm font-medium text-gray-700">Sample decrypted items:</p>';
+                    html += '<ul class="text-sm text-gray-600 mt-1">';
+                    
+                    const sampleCount = Math.min(3, successCount);
+                    for (let i = 0; i < sampleCount; i++) {
+                        const decryptedText = uint8ArrayToStr(result.successes[i]);
+                        html += `<li class="truncate">${decryptedText}</li>`;
+                    }
+                    
+                    if (successCount > sampleCount) {
+                        html += `<li>...and ${successCount - sampleCount} more</li>`;
+                    }
+                    
+                    html += '</ul></div>';
+                }
+                
+                batchResultsElement.innerHTML = html;
+                updateServiceStatus(`Batch decryption completed: ${successCount} success, ${errorCount} errors`, 
+                                    errorCount > 0 ? 'error' : 'success');
+            } catch (error) {
+                console.error('Batch decryption error:', error);
+                document.getElementById('batchResults').innerHTML = 
+                    `<p class="text-red-600">Batch decryption failed: ${error}</p>`;
+                updateServiceStatus('Batch decryption failed: ' + error, 'error');
+            }
+        }
+        
+        // Initialize stream
+        async function initStream() {
+            if (!cryptoService) {
+                updateServiceStatus('Crypto service not initialized', 'error');
+                return;
+            }
+            
+            try {
+                streamState = await cryptoService.init_stream_encrypt();
+                document.getElementById('processStreamBtn').disabled = false;
+                document.getElementById('streamResult').value = 'Stream initialized, ready to process data';
+                document.getElementById('streamProgressContainer').classList.remove('hidden');
+                updateServiceStatus('Stream encryption initialized', 'success');
+            } catch (error) {
+                console.error('Stream initialization error:', error);
+                document.getElementById('streamResult').value = 'Error initializing stream: ' + error;
+                updateServiceStatus('Stream initialization failed: ' + error, 'error');
+            }
+        }
+        
+        // Process stream
+        async function processStream() {
+            if (!cryptoService || !streamState) {
+                updateServiceStatus('Stream not initialized', 'error');
+                return;
+            }
+            
+            try {
+                const streamData = document.getElementById('streamData').value;
+                const context = document.getElementById('context').value;
+                const aad = document.getElementById('aad').value;
+                
+                // Convert to Uint8Array
+                const contextBytes = strToUint8Array(context);
+                const aadBytes = aad ? strToUint8Array(aad) : null;
+                
+                // Process in chunks of 10 bytes to demonstrate streaming
+                const chunkSize = 10;
+                const dataBytes = strToUint8Array(streamData);
+                let position = 0;
+                let finalResult = null;
+                
+                document.getElementById('streamResult').value = 'Processing stream...';
+                
+                while (position < dataBytes.length) {
+                    const chunk = dataBytes.slice(position, Math.min(position + chunkSize, dataBytes.length));
+                    position += chunk.length;
+                    
+                    const isFinal = position >= dataBytes.length;
+                    
+                    const result = await cryptoService.stream_encrypt_chunk(
+                        streamState,
+                        chunk,
+                        contextBytes,
+                        aadBytes,
+                        isFinal,
+                        (bytesProcessed) => {
+                            document.getElementById('streamProgressText').textContent = 
+                                `Processed ${bytesProcessed} bytes`;
+                        }
+                    );
+                    
+                    if (isFinal && result.length > 0) {
+                        finalResult = result;
+                    }
+                    
+                    // Update progress bar
+                    const progress = position / dataBytes.length;
+                    updateProgress('streamProgressBar', 'streamProgressText', progress);
+                }
+                
+                if (finalResult) {
+                    document.getElementById('streamResult').value = uint8ArrayToHex(finalResult);
+                    updateServiceStatus('Stream processing completed', 'success');
+                } else {
+                    document.getElementById('streamResult').value = 'Stream processing completed (no final result)';
+                    updateServiceStatus('Stream processing completed (no final result)', 'error');
+                }
+            } catch (error) {
+                console.error('Stream processing error:', error);
+                document.getElementById('streamResult').value = 'Error processing stream: ' + error;
+                updateServiceStatus('Stream processing failed: ' + error, 'error');
+            } finally {
+                streamState = null;
+                document.getElementById('processStreamBtn').disabled = true;
+            }
+        }
+        
+        // Save to database
+        async function saveToDatabase() {
+            if (!cryptoService) {
+                updateServiceStatus('Crypto service not initialized', 'error');
+                return;
+            }
+            
+            try {
+                const inputData = document.getElementById('inputData').value;
+                const context = document.getElementById('context').value;
+                const aad = document.getElementById('aad').value;
+                const storageKey = document.getElementById('storageKey').value;
+                
+                // Encrypt the data first
+                const inputBytes = strToUint8Array(inputData);
+                const contextBytes = strToUint8Array(context);
+                const aadBytes = aad ? strToUint8Array(aad) : null;
+                
+                const ciphertext = await cryptoService.encrypt(
+                    inputBytes,
+                    contextBytes,
+                    aadBytes
+                );
+                
+                // Save to IndexedDB
+                const saved = await saveToDb(storageKey, Array.from(ciphertext));
+                
+                if (saved) {
+                    document.getElementById('resultData').value = `Data saved to DB with key: ${storageKey}`;
+                    updateServiceStatus('Data saved to database', 'success');
+                } else {
+                    document.getElementById('resultData').value = 'Failed to save data to DB';
+                    updateServiceStatus('Failed to save data to DB', 'error');
+                }
+            } catch (error) {
+                console.error('Save to DB error:', error);
+                document.getElementById('resultData').value = 'Error saving to DB: ' + error;
+                updateServiceStatus('Error saving to DB: ' + error, 'error');
+            }
+        }
+        
+        // Load from database
+        async function loadFromDatabase() {
+            if (!cryptoService) {
+                updateServiceStatus('Crypto service not initialized', 'error');
+                return;
+            }
+            
+            try {
+                const context = document.getElementById('context').value;
+                const aad = document.getElementById('aad').value;
+                const storageKey = document.getElementById('storageKey').value;
+                
+                // Load from IndexedDB
+                const encryptedData = await loadFromDb(storageKey);
+                
+                if (!encryptedData) {
+                    document.getElementById('resultData').value = 'No data found in DB';
+                    updateServiceStatus('No data found in DB', 'error');
+                    return;
+                }
+                
+                // Convert to Uint8Array
+                const encryptedBytes = new Uint8Array(encryptedData);
+                const contextBytes = strToUint8Array(context);
+                const aadBytes = aad ? strToUint8Array(aad) : null;
+                
+                // Decrypt the data
+                const plaintext = await cryptoService.decrypt(
+                    encryptedBytes,
+                    contextBytes,
+                    aadBytes
+                );
+                
+                document.getElementById('resultData').value = uint8ArrayToStr(plaintext);
+                document.getElementById('inputData').value = uint8ArrayToStr(plaintext);
+                updateServiceStatus('Data loaded and decrypted from DB', 'success');
+            } catch (error) {
+                console.error('Load from DB error:', error);
+                document.getElementById('resultData').value = 'Error loading from DB: ' + error;
+                updateServiceStatus('Error loading from DB: ' + error, 'error');
+            }
+        }
+        
+        // Generate random bytes
+        async function generateRandomBytes() {
+            try {
+                const length = parseInt(document.getElementById('randomBytesLength').value);
+                const randomBytes = await SecureBytes.random(length);
+                document.getElementById('randomBytesResult').value = uint8ArrayToHex(randomBytes.data());
+                updateServiceStatus(`Generated ${length} random bytes`, 'success');
+            } catch (error) {
+                console.error('Random bytes generation error:', error);
+                document.getElementById('randomBytesResult').value = 'Error: ' + error;
+                updateServiceStatus('Random bytes generation failed: ' + error, 'error');
+            }
+        }
+        
+        // Estimate encrypted size
+        async function estimateEncryptedSize() {
+            if (!cryptoService) {
+                updateServiceStatus('Crypto service not initialized', 'error');
+                return;
+            }
+            
+            try {
+                const inputSize = parseInt(document.getElementById('sizeEstimateInput').value);
+                const estimatedSize = cryptoService.estimate_encrypted_size(inputSize);
+                document.getElementById('sizeEstimateResult').textContent = 
+                    `Estimated encrypted size: ${estimatedSize} bytes (${Math.round(estimatedSize / inputSize * 100)}% of original)`;
+                updateServiceStatus('Size estimation completed', 'success');
+            } catch (error) {
+                console.error('Size estimation error:', error);
+                document.getElementById('sizeEstimateResult').textContent = 'Error estimating size: ' + error;
+                updateServiceStatus('Size estimation failed: ' + error, 'error');
+            }
+        }
+        
+        // Start the application when WASM is ready
+        async function startApp() {
+            // Load WASM module
+            try {
+                const wasmModule = await import('./enc.js');
+                Object.assign(window, wasmModule);
+                
+                // Initialize the app
+                await initApp();
+            } catch (error) {
+                console.error('WASM loading error:', error);
+                updateServiceStatus('Failed to load WASM module: ' + error, 'error');
+            }
+        }
+        
+        // Start the application when the page loads
+        window.addEventListener('DOMContentLoaded', startApp);
+    </script>
+</body>
+</html>

@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Files</title>
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-100%);
+        }
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        .file-item:hover .file-actions {
+            opacity: 1;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .drag-active {
+            background-color: rgba(96, 165, 250, 0.1);
+            transition: background-color 0.2s ease;
+        }
+        .context-menu {
+            animation: scaleIn 0.15s ease-out;
+        }
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            visibility: hidden;
+        }
+        .page.active {
+            transform: translateX(0);
+            visibility: visible;
+        }
+        .filter-dropdown-content {
+            position: absolute;
+            z-index: 20;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+        }
+        .filter-dropdown:hover .filter-dropdown-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 antialiased">
+    <div class="flex flex-col h-screen overflow-hidden">
+        <header class="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-3">
+                <button id="sidebarToggle" class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="bx bx-menu text-xl"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <i class="bx bx-folder text-blue-400 text-2xl"></i>
+                    <h1 class="font-semibold text-lg">Secure Files</h1>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="searchToggle" class="p-2 rounded-lg hover:bg-gray-700 md:hidden transition-colors">
+                    <i class="bx bx-search text-xl"></i>
+                </button>
+                <div class="relative hidden md:block">
+                    <input type="text" id="searchInput" placeholder="Search files..." class="bg-gray-700 border-0 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 w-64 transition-all">
+                    <i class="bx bx-search absolute left-3 top-2.5 text-gray-400"></i>
+                </div>
+                <button id="toggleDarkMode" class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="bx bx-sun text-xl"></i>
+                </button>
+                <button id="moreActions" class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="bx bx-dots-vertical-rounded text-xl"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden">
+            <aside id="sidebar" class="sidebar fixed md:static z-30 w-64 h-full bg-gray-800 border-r border-gray-700 flex flex-col">
+                <div class="p-4 flex-1 overflow-y-auto">
+                    <div class="space-y-1">
+                        <button class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-lg bg-gray-700 text-blue-400 font-medium transition-colors" data-page="homePage">
+                            <i class="bx bx-home text-xl"></i>
+                            <span>Home</span>
+                        </button>
+                        <button class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors" data-page="favoritesPage">
+                            <i class="bx bx-star text-xl"></i>
+                            <span>Favorites</span>
+                        </button>
+                        <button class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors" data-page="recentPage">
+                            <i class="bx bx-time text-xl"></i>
+                            <span>Recent</span>
+                        </button>
+                        <button class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors" data-page="trashPage">
+                            <i class="bx bx-trash text-xl"></i>
+                            <span>Trash</span>
+                        </button>
+                        <button class="nav-item w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors" data-page="backupsPage">
+                            <i class="bx bx-cloud-upload text-xl"></i>
+                            <span>Backups</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-8">
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Storage</h3>
+                        <div class="px-3 space-y-3">
+                            <div class="flex justify-between text-sm">
+                                <span id="storageUsed">5.2 GB of 10 GB used</span>
+                                <span id="storagePercent" class="font-medium">52%</span>
+                            </div>
+                            <div class="bg-gray-700 rounded-full h-2">
+                                <div id="storageBar" class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: 52%"></div>
+                            </div>
+                            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center space-x-2 transition-colors">
+                                <i class="bx bx-plus"></i>
+                                <span>Upgrade Storage</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Tags</h3>
+                        <div class="space-y-1">
+                            <button class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-tag text-xl text-red-500"></i>
+                                <span>Important</span>
+                            </button>
+                            <button class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-tag text-xl text-green-500"></i>
+                                <span>Work</span>
+                            </button>
+                            <button class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-tag text-xl text-purple-500"></i>
+                                <span>Personal</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 border-t border-gray-700">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">JD</div>
+                        <div class="flex-1">
+                            <div class="font-medium">John Doe</div>
+                            <div class="text-xs text-gray-400">Free Plan</div>
+                        </div>
+                        <button class="p-1 rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="bx bx-log-out text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden hidden"></div>
+
+            <div class="flex flex-1 overflow-hidden relative">
+                <!-- Home Page -->
+                <main id="homePage" class="page flex flex-col bg-gray-900 active">
+                    <div id="toolbar" class="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center space-x-2">
+                            <button id="viewToggle" class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-grid-alt text-xl"></i>
+                            </button>
+                            <button id="sortToggle" class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-sort text-xl"></i>
+                            </button>
+                            <button id="selectItems" class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-check-square text-xl"></i>
+                            </button>
+                            <div class="relative">
+                                <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors filter-dropdown">
+                                    <i class="bx bx-filter text-xl"></i>
+                                </button>
+                                <div class="filter-dropdown-content bg-gray-800 border border-gray-700 rounded-lg shadow-lg mt-2 w-48">
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">All Files</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Documents</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Images</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Videos</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Encrypted Only</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="uploadBtn" class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="bx bx-upload"></i>
+                                <span class="hidden sm:inline">Upload</span>
+                            </button>
+                            <button id="newFolderBtn" class="flex items-center space-x-2 bg-gray-700 border border-gray-600 hover:bg-gray-600 py-1.5 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="bx bx-folder-plus"></i>
+                                <span class="hidden sm:inline">New Folder</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="breadcrumbs" class="bg-gray-800 px-4 py-2 flex items-center overflow-x-auto text-sm shadow-sm">
+                        <button class="flex items-center text-blue-400 hover:underline transition-colors" data-path="">
+                            <i class="bx bx-home"></i>
+                            <span class="ml-1">Home</span>
+                        </button>
+                    </div>
+
+                    <div id="fileContainer" class="flex-1 overflow-auto p-4">
+                        <div id="emptyState" class="hidden flex flex-col items-center justify-center h-full">
+                            <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                <i class="bx bx-folder text-4xl text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">No files here yet</h3>
+                            <p class="text-gray-400 mb-6 text-center max-w-md">Upload files or create a new folder to get started</p>
+                            <button id="uploadEmptyBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium flex items-center space-x-2 transition-colors">
+                                <i class="bx bx-upload"></i>
+                                <span>Upload Files</span>
+                            </button>
+                        </div>
+
+                        <div id="fileGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            <!-- Files will be loaded here -->
+                        </div>
+                    </div>
+                </main>
+
+                <!-- Favorites Page -->
+                <main id="favoritesPage" class="page flex flex-col bg-gray-900">
+                    <div class="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center space-x-2">
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-grid-alt text-xl"></i>
+                            </button>
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-sort text-xl"></i>
+                            </button>
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-check-square text-xl"></i>
+                            </button>
+                            <div class="relative">
+                                <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors filter-dropdown">
+                                    <i class="bx bx-filter text-xl"></i>
+                                </button>
+                                <div class="filter-dropdown-content bg-gray-800 border border-gray-700 rounded-lg shadow-lg mt-2 w-48">
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">All Favorites</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Folders</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Documents</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Images</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="flex items-center space-x-2 bg-gray-700 border border-gray-600 hover:bg-gray-600 py-1.5 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="bx bx-star"></i>
+                                <span class="hidden sm:inline">Remove from Favorites</span>
+                            </button>
+                            <button class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="bx bx-star"></i>
+                                <span class="hidden sm:inline">Add to Favorites</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 px-4 py-2 flex items-center justify-between text-sm shadow-sm">
+                        <span class="flex items-center text-blue-400">
+                            <i class="bx bx-star"></i>
+                            <span class="ml-1">Favorites</span>
+                        </span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                            <span id="favoritesCount">0 items</span>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-auto p-4">
+                        <div id="favoritesEmptyState" class="hidden flex flex-col items-center justify-center h-full">
+                            <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                <i class="bx bx-star text-4xl text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">No favorites yet</h3>
+                            <p class="text-gray-400 mb-6 text-center max-w-md">Add files or folders to favorites from the home page</p>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium flex items-center space-x-2 transition-colors">
+                                <i class="bx bx-home"></i>
+                                <span>Go to Home</span>
+                            </button>
+                        </div>
+
+                        <div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            <!-- Favorite files will be loaded here -->
+                        </div>
+                    </div>
+                </main>
+
+                <!-- Recent Page -->
+                <main id="recentPage" class="page flex flex-col bg-gray-900">
+                    <div class="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center space-x-2">
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-grid-alt text-xl"></i>
+                            </button>
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-sort text-xl"></i>
+                            </button>
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-check-square text-xl"></i>
+                            </button>
+                            <div class="relative">
+                                <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors filter-dropdown">
+                                    <i class="bx bx-filter text-xl"></i>
+                                </button>
+                                <div class="filter-dropdown-content bg-gray-800 border border-gray-700 rounded-lg shadow-lg mt-2 w-48">
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Last 24 Hours</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Last 7 Days</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Last 30 Days</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">All Time</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="flex items-center space-x-2 bg-gray-700 border border-gray-600 hover:bg-gray-600 py-1.5 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="bx bx-trash"></i>
+                                <span class="hidden sm:inline">Clear Recent</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 px-4 py-2 flex items-center justify-between text-sm shadow-sm">
+                        <span class="flex items-center text-blue-400">
+                            <i class="bx bx-time"></i>
+                            <span class="ml-1">Recent</span>
+                        </span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                            <span id="recentCount">0 items</span>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-auto p-4">
+                        <div id="recentEmptyState" class="hidden flex flex-col items-center justify-center h-full">
+                            <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                <i class="bx bx-time text-4xl text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">No recent files</h3>
+                            <p class="text-gray-400 mb-6 text-center max-w-md">Recently accessed files will appear here</p>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium flex items-center space-x-2 transition-colors">
+                                <i class="bx bx-home"></i>
+                                <span>Go to Home</span>
+                            </button>
+                        </div>
+
+                        <div id="recentGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            <!-- Recent files will be loaded here -->
+                        </div>
+                    </div>
+                </main>
+
+                <!-- Trash Page -->
+                <main id="trashPage" class="page flex flex-col bg-gray-900">
+                    <div class="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center space-x-2">
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-grid-alt text-xl"></i>
+                            </button>
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-sort text-xl"></i>
+                            </button>
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-check-square text-xl"></i>
+                            </button>
+                            <div class="relative">
+                                <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors filter-dropdown">
+                                    <i class="bx bx-filter text-xl"></i>
+                                </button>
+                                <div class="filter-dropdown-content bg-gray-800 border border-gray-700 rounded-lg shadow-lg mt-2 w-48">
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">All Deleted</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Deleted Today</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Deleted This Week</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Folders Only</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="flex items-center space-x-2 bg-gray-700 border border-gray-600 hover:bg-gray-600 py-1.5 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="bx bx-undo"></i>
+                                <span class="hidden sm:inline">Restore</span>
+                            </button>
+                            <button class="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="bx bx-trash"></i>
+                                <span class="hidden sm:inline">Empty Trash</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 px-4 py-2 flex items-center justify-between text-sm shadow-sm">
+                        <span class="flex items-center text-blue-400">
+                            <i class="bx bx-trash"></i>
+                            <span class="ml-1">Trash</span>
+                        </span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                            <span id="trashCount">0 items</span>
+                            <span class="text-gray-400">•</span>
+                            <span id="trashSize">0 MB</span>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-auto p-4">
+                        <div id="trashEmptyState" class="hidden flex flex-col items-center justify-center h-full">
+                            <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                <i class="bx bx-trash text-4xl text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">Trash is empty</h3>
+                            <p class="text-gray-400 mb-6 text-center max-w-md">Deleted files will appear here</p>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium flex items-center space-x-2 transition-colors">
+                                <i class="bx bx-home"></i>
+                                <span>Go to Home</span>
+                            </button>
+                        </div>
+
+                        <div id="trashGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            <!-- Trash files will be loaded here -->
+                        </div>
+                    </div>
+                </main>
+
+                <!-- Backups Page -->
+                <main id="backupsPage" class="page flex flex-col bg-gray-900">
+                    <div class="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center space-x-2">
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-grid-alt text-xl"></i>
+                            </button>
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-sort text-xl"></i>
+                            </button>
+                            <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="bx bx-check-square text-xl"></i>
+                            </button>
+                            <div class="relative">
+                                <button class="p-2 rounded-lg hover:bg-gray-700 transition-colors filter-dropdown">
+                                    <i class="bx bx-filter text-xl"></i>
+                                </button>
+                                <div class="filter-dropdown-content bg-gray-800 border border-gray-700 rounded-lg shadow-lg mt-2 w-48">
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">All Backups</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Manual Backups</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Automatic Backups</button>
+                                    <button class="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors">Encrypted Backups</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="bx bx-cloud-upload"></i>
+                                <span class="hidden sm:inline">Create Backup</span>
+                            </button>
+                            <button class="flex items-center space-x-2 bg-gray-700 border border-gray-600 hover:bg-gray-600 py-1.5 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="bx bx-cog"></i>
+                                <span class="hidden sm:inline">Backup Settings</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 px-4 py-2 flex items-center justify-between text-sm shadow-sm">
+                        <span class="flex items-center text-blue-400">
+                            <i class="bx bx-cloud-upload"></i>
+                            <span class="ml-1">Backups</span>
+                        </span>
+                        <div class="flex items-center space-x-2 text-gray-400">
+                            <span id="backupsCount">0 backups</span>
+                            <span class="text-gray-400">•</span>
+                            <span id="backupsSize">0 MB</span>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-auto p-4">
+                        <div id="backupsEmptyState" class="hidden flex flex-col items-center justify-center h-full">
+                            <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                <i class="bx bx-cloud-upload text-4xl text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">No backups yet</h3>
+                            <p class="text-gray-400 mb-6 text-center max-w-md">Create a backup to store your files securely</p>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium flex items-center space-x-2 transition-colors">
+                                <i class="bx bx-cloud-upload"></i>
+                                <span>Create Backup</span>
+                            </button>
+                        </div>
+
+                        <div id="backupsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            <!-- Backup files will be loaded here -->
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div id="progressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6 animate-[fadeIn_0.3s_ease-in]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Processing Files</h3>
+                <button id="cancelUpload" class="p-1 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="bx bx-x text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <svg class="progress-ring w-12 h-12" viewBox="0 0 48 48">
+                            <circle class="progress-ring__circle stroke-gray-700" stroke-width="4" fill="transparent" r="20" cx="24" cy="24"></circle>
+                            <circle class="progress-ring__circle stroke-blue-500" stroke-width="4" fill="transparent" r="20" cx="24" cy="24" stroke-dasharray="125.6" stroke-dashoffset="125.6"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-medium" id="progressPercent">0%</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium truncate" id="progressFileName">filename.ext</div>
+                        <div class="text-sm text-gray-400 flex justify-between">
+                            <span id="progressSize">0 MB of 10 MB</span>
+                            <span id="progressSpeed">0 MB/s</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-700 rounded-full h-2">
+                    <div id="progressBar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-sm text-gray-400">
+                    <span id="progressTimeElapsed">0:00</span>
+                    <span id="progressTimeRemaining">0:00 remaining</span>
+                </div>
+                <div class="bg-gray-700 rounded-lg overflow-hidden">
+                    <div id="progressBar2" class="bg-blue-500 h-2 rounded-lg transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu fixed z-50 bg-gray-800 shadow-lg rounded-lg py-1 w-48 hidden border border-gray-700">
+        <button class="context-action w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2 transition-colors" data-action="download">
+            <i class="bx bx-download"></i>
+            <span>Download</span>
+        </button>
+        <button class="context-action w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2 transition-colors" data-action="share">
+            <i class="bx bx-share-alt"></i>
+            <span>Share</span>
+        </button>
+        <button class="context-action w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2 transition-colors" data-action="rename">
+            <i class="bx bx-rename"></i>
+            <span>Rename</span>
+        </button>
+        <button class="context-action w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2 transition-colors" data-action="encrypt">
+            <i class="bx bx-lock"></i>
+            <span>Encrypt</span>
+        </button>
+        <button class="context-action w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2 transition-colors" data-action="decrypt">
+            <i class="bx bx-lock-open"></i>
+            <span>Decrypt</span>
+        </button>
+        <button class="context-action w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2 transition-colors" data-action="move">
+            <i class="bx bx-move"></i>
+            <span>Move</span>
+        </button>
+        <button class="context-action w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2 transition-colors" data-action="copy">
+            <i class="bx bx-copy"></i>
+            <span>Copy</span>
+        </button>
+        <button class="context-action w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center space-x-2 transition-colors" data-action="addTag">
+            <i class="bx bx-tag"></i>
+            <span>Add Tag</span>
+        </button>
+        <div class="border-t border-gray-700 my-1"></div>
+        <button class="context-action w-full text-left px-4 py-2 hover:bg-gray-700 text-red-500 flex items-center space-x-2 transition-colors" data-action="delete">
+            <i class="bx bx-trash"></i>
+            <span>Delete</span>
+        </button>
+    </div>
+
+    <div id="renameModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6 animate-[fadeIn_0.3s_ease-in]">
+            <h3 class="text-lg font-semibold mb-4">Rename File</h3>
+            <input type="text" id="renameInput" class="w-full bg-gray-700 border-0 rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-blue-500">
+            <div class="flex justify-end space-x-2">
+                <button id="cancelRename" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">Cancel</button>
+                <button id="confirmRename" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors">Rename</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="moveModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6 animate-[fadeIn_0.3s_ease-in]">
+            <h3 class="text-lg font-semibold mb-4">Move File</h3>
+            <input type="text" id="moveInput" placeholder="Enter destination path" class="w-full bg-gray-700 border-0 rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-blue-500">
+            <div class="flex justify-end space-x-2">
+                <button id="cancelMove" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">Cancel</button>
+                <button id="confirmMove" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors">Move</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="copyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6 animate-[fadeIn_0.3s_ease-in]">
+            <h3 class="text-lg font-semibold mb-4">Copy File</h3>
+            <input type="text" id="copyInput" placeholder="Enter destination path" class="w-full bg-gray-700 border-0 rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-blue-500">
+            <div class="flex justify-end space-x-2">
+                <button id="cancelCopy" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">Cancel</button>
+                <button id="confirmCopy" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors">Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tagModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6 animate-[fadeIn_0.3s_ease-in]">
+            <h3 class="text-lg font-semibold mb-4">Add Tag</h3>
+            <input type="text" id="tagInput" placeholder="Enter tag name" class="w-full bg-gray-700 border-0 rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-blue-500">
+            <div class="flex justify-end space-x-2">
+                <button id="cancelTag" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">Cancel</button>
+                <button id="confirmTag" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors">Add Tag</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" class="hidden" multiple>
+    <script src="ky.js" type="module"></script>
+    <script src="app.js" type="module"></script>
+</body>
+</html>

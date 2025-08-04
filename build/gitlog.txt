@@ -138,3 +138,20 @@ g.sh
 git.sh
 gitlog.txt
 rust.sh
++ read -p 'Commit message (default: '\''update'\''): ' COMMIT_MSG
+Commit message (default: 'update'): + COMMIT_MSG='new changes'
++ echo -e '\n\033[1;33m1. Checking git repository...\033[0m'
+
+[1;33m1. Checking git repository...[0m
+++ git rev-parse --abbrev-ref HEAD
++ BRANCH=main
++ '[' 0 -ne 0 ']'
++ echo -e '\n\033[1;33m2. Checking remote repository...\033[0m'
+
+[1;33m2. Checking remote repository...[0m
++ git remote
++ grep -q origin
++ echo -e '\n\033[1;33m3. Staging files...\033[0m'
+
+[1;33m3. Staging files...[0m
++ git add .

@@ -1,0 +1,8 @@
+/workspaces/Rustmd/archive/target/release/deps/wasm_bindgen_macro_support-6f4737e2f5b3278d.d: /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.100/src/lib.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.100/src/parser.rs
+
+/workspaces/Rustmd/archive/target/release/deps/libwasm_bindgen_macro_support-6f4737e2f5b3278d.rlib: /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.100/src/lib.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.100/src/parser.rs
+
+/workspaces/Rustmd/archive/target/release/deps/libwasm_bindgen_macro_support-6f4737e2f5b3278d.rmeta: /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.100/src/lib.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.100/src/parser.rs
+
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.100/src/lib.rs:
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.100/src/parser.rs:

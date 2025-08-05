@@ -155,3 +155,126 @@ Commit message (default: 'update'): + COMMIT_MSG='new changes'
 
 [1;33m3. Staging files...[0m
 + git add .
++ check_files_in_git
++ echo -e '\n\033[1;36m=== Checking git status ===\033[0m'
+
+[1;36m=== Checking git status ===[0m
++ git status
+On branch main
+Your branch is ahead of 'origin/main' by 2 commits.
+  (use "git push" to publish your local commits)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   gitlog.txt
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   gitlog.txt
+	modified:   ../enc/target/.rustc_info.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	../archive/
+	../enc/target/debug/
+
++ echo -e '\n\033[1;36m=== Files in repository ===\033[0m'
+
+[1;36m=== Files in repository ===[0m
++ git ls-files
+b.sh
+g.sh
+git.sh
+gitlog.txt
+rust.sh
++ echo -e '\n\033[1;33m4. Making commit...\033[0m'
+
+[1;33m4. Making commit...[0m
++ git commit -m 'new changes'
+[main 68ff039] new changes
+ 1 file changed, 17 insertions(+)
++ echo -e '\n\033[1;33m5. Pushing to GitHub...\033[0m'
+
+[1;33m5. Pushing to GitHub...[0m
++ git push origin main
+To https://github.com/Ama254/Rustmd
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'https://github.com/Ama254/Rustmd'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
++ echo -e '\n\033[1;31mPush failed! Trying to diagnose...\033[0m'
+
+[1;31mPush failed! Trying to diagnose...[0m
++ git push origin main
++ grep -q 'has no upstream branch'
++ echo -e '\033[1;31mUnknown push error. Try manually with:\033[0m'
+[1;31mUnknown push error. Try manually with:[0m
++ echo -e 'git push origin main'
+git push origin main
++ check_files_in_git
++ echo -e '\n\033[1;36m=== Checking git status ===\033[0m'
+
+[1;36m=== Checking git status ===[0m
++ git status
+On branch main
+Your branch is ahead of 'origin/main' by 3 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   gitlog.txt
+	modified:   ../enc/target/.rustc_info.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	../archive/
+	../enc/target/debug/
+
+no changes added to commit (use "git add" and/or "git commit -a")
++ echo -e '\n\033[1;36m=== Files in repository ===\033[0m'
+
+[1;36m=== Files in repository ===[0m
++ git ls-files
+b.sh
+g.sh
+git.sh
+gitlog.txt
+rust.sh
++ echo -e '\n\033[1;36m=== Final verification ===\033[0m'
+
+[1;36m=== Final verification ===[0m
++ check_files_in_git
++ echo -e '\n\033[1;36m=== Checking git status ===\033[0m'
+
+[1;36m=== Checking git status ===[0m
++ git status
+On branch main
+Your branch is ahead of 'origin/main' by 3 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   gitlog.txt
+	modified:   ../enc/target/.rustc_info.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	../archive/
+	../enc/target/debug/
+
+no changes added to commit (use "git add" and/or "git commit -a")
++ echo -e '\n\033[1;36m=== Files in repository ===\033[0m'
+
+[1;36m=== Files in repository ===[0m
++ git ls-files
+b.sh
+g.sh
+git.sh
+gitlog.txt
+rust.sh

@@ -1,0 +1,10 @@
+/workspaces/Rustmd/archive/target/wasm32-unknown-unknown/release/deps/web_sys-23b96d5a18be354d.d: /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/lib.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/mod.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/gen_AbortController.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/gen_ReadableStream.rs
+
+/workspaces/Rustmd/archive/target/wasm32-unknown-unknown/release/deps/libweb_sys-23b96d5a18be354d.rlib: /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/lib.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/mod.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/gen_AbortController.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/gen_ReadableStream.rs
+
+/workspaces/Rustmd/archive/target/wasm32-unknown-unknown/release/deps/libweb_sys-23b96d5a18be354d.rmeta: /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/lib.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/mod.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/gen_AbortController.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/gen_ReadableStream.rs
+
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/lib.rs:
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/mod.rs:
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/gen_AbortController.rs:
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.77/src/features/gen_ReadableStream.rs:

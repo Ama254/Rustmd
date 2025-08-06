@@ -1,0 +1,28 @@
+[package]
+name = "wav"
+version = "0.1.0"
+edition = "2021"
+
+
+
+[lib]
+crate-type = ["cdylib"]
+
+
+[dependencies]
+wasm-bindgen = "0.2.95" # Latest stable version for WASM bindings
+wee_alloc = "0.4.5" # Lightweight allocator for WASM
+console_error_panic_hook = "0.1.7" # Panic hook for browser console
+symphonia = { version = "0.5.4", features = ["mp3", "wav"] } # MP3 and WAV support
+hound = "3.5.1" # WAV reading/writing
+rubato = "0.15.0" # Resampling
+
+[profile.release]
+opt-level = 3 # Maximum optimization for performance
+lto = true # Link-time optimization for smaller binary
+codegen-units = 1 # Single codegen unit for better optimization
+strip = true # Strip debug symbols
+panic = "abort" # Use abort on panic for smaller binary
+
+[profile.dev]
+opt-level = 1 # Minimal optimization for faster compilation during development

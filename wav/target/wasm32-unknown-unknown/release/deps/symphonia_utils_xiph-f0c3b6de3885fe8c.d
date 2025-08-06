@@ -1,0 +1,10 @@
+/workspaces/Rustmd/wav/target/wasm32-unknown-unknown/release/deps/symphonia_utils_xiph-f0c3b6de3885fe8c.d: /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/lib.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/flac/mod.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/flac/metadata.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/vorbis/mod.rs
+
+/workspaces/Rustmd/wav/target/wasm32-unknown-unknown/release/deps/libsymphonia_utils_xiph-f0c3b6de3885fe8c.rlib: /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/lib.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/flac/mod.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/flac/metadata.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/vorbis/mod.rs
+
+/workspaces/Rustmd/wav/target/wasm32-unknown-unknown/release/deps/libsymphonia_utils_xiph-f0c3b6de3885fe8c.rmeta: /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/lib.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/flac/mod.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/flac/metadata.rs /home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/vorbis/mod.rs
+
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/lib.rs:
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/flac/mod.rs:
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/flac/metadata.rs:
+/home/codespace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-utils-xiph-0.5.4/src/vorbis/mod.rs:

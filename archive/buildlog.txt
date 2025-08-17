@@ -1,73 +1,91 @@
    Compiling archive v0.1.0 (/workspaces/Rustmd/archive)
+warning: variable does not need to be mutable
+    --> src/lib.rs:1119:9
+     |
+1119 |     let mut options = BlobPropertyBag::new();
+     |         ----^^^^^^^
+     |         |
+     |         help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` on by default
+
+warning: variable does not need to be mutable
+    --> src/lib.rs:1162:9
+     |
+1162 |     let mut options = BlobPropertyBag::new();
+     |         ----^^^^^^^
+     |         |
+     |         help: remove this `mut`
+
 warning: constant `MIN_COMPRESSION_LEVEL` is never used
-  --> src/lib.rs:25:7
+  --> src/lib.rs:23:7
    |
-25 | const MIN_COMPRESSION_LEVEL: i32 = -7;
+23 | const MIN_COMPRESSION_LEVEL: i32 = -7;
    |       ^^^^^^^^^^^^^^^^^^^^^
    |
    = note: `#[warn(dead_code)]` on by default
 
 warning: constant `MAX_COMPRESSION_LEVEL` is never used
-  --> src/lib.rs:26:7
+  --> src/lib.rs:24:7
    |
-26 | const MAX_COMPRESSION_LEVEL: i32 = 22;
+24 | const MAX_COMPRESSION_LEVEL: i32 = 22;
    |       ^^^^^^^^^^^^^^^^^^^^^
 
 warning: fields `os_code` and `preset` are never read
-   --> src/lib.rs:409:5
+   --> src/lib.rs:407:5
     |
-403 | pub struct ArchiveConfig {
+401 | pub struct ArchiveConfig {
     |            ------------- fields in this struct
 ...
-409 |     os_code: Option<u32>,
+407 |     os_code: Option<u32>,
     |     ^^^^^^^
 ...
-415 |     preset: Option<String>,
+413 |     preset: Option<String>,
     |     ^^^^^^
 
 warning: field `buffer_pool` is never read
-   --> src/lib.rs:441:5
+   --> src/lib.rs:439:5
     |
-439 | struct CompressionContext {
+437 | struct CompressionContext {
     |        ------------------ field in this struct
-440 |     encoder: CompressionEncoder,
-441 |     buffer_pool: Vec<BytesMut>,
+438 |     encoder: CompressionEncoder,
+439 |     buffer_pool: Vec<BytesMut>,
     |     ^^^^^^^^^^^
 
 warning: methods `get_buffer` and `return_buffer` are never used
-   --> src/lib.rs:480:8
+   --> src/lib.rs:478:8
     |
-444 | impl CompressionContext {
+442 | impl CompressionContext {
     | ----------------------- methods in this implementation
 ...
-480 |     fn get_buffer(&mut self, size: usize) -> BytesMut {
+478 |     fn get_buffer(&mut self, size: usize) -> BytesMut {
     |        ^^^^^^^^^^
 ...
-486 |     fn return_buffer(&mut self, mut buffer: BytesMut) {
+484 |     fn return_buffer(&mut self, mut buffer: BytesMut) {
     |        ^^^^^^^^^^^^^
 
 warning: fields `buffer_pool` and `dict` are never read
-   --> src/lib.rs:536:5
+   --> src/lib.rs:534:5
     |
-534 | struct DecompressionContext<'a> {
+532 | struct DecompressionContext<'a> {
     |        -------------------- fields in this struct
-535 |     decoder: CompressionDecoder<'a>,
-536 |     buffer_pool: Vec<BytesMut>,
+533 |     decoder: CompressionDecoder<'a>,
+534 |     buffer_pool: Vec<BytesMut>,
     |     ^^^^^^^^^^^
-537 |     dict: Option<Vec<u8>>,
+535 |     dict: Option<Vec<u8>>,
     |     ^^^^
 
 warning: methods `get_buffer` and `return_buffer` are never used
-   --> src/lib.rs:569:8
+   --> src/lib.rs:567:8
     |
-540 | impl<'a> DecompressionContext<'a> {
+538 | impl<'a> DecompressionContext<'a> {
     | --------------------------------- methods in this implementation
 ...
-569 |     fn get_buffer(&mut self, size: usize) -> BytesMut {
+567 |     fn get_buffer(&mut self, size: usize) -> BytesMut {
     |        ^^^^^^^^^^
 ...
-575 |     fn return_buffer(&mut self, mut buffer: BytesMut) {
+573 |     fn return_buffer(&mut self, mut buffer: BytesMut) {
     |        ^^^^^^^^^^^^^
 
-warning: `archive` (lib) generated 7 warnings
-    Finished `release` profile [optimized] target(s) in 16.79s
+warning: `archive` (lib) generated 9 warnings (run `cargo fix --lib -p archive` to apply 2 suggestions)
+    Finished `release` profile [optimized] target(s) in 11.68s

@@ -1,20 +1,18 @@
 use std::io::{self, BufRead, Read, Write, Cursor};
 use std::error::Error as StdError;
 use std::fmt;
-use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use flate2::{Compression, GzBuilder};
 use flate2::read::{DeflateDecoder as FlateDeflateDecoder, GzDecoder as FlateGzDecoder, ZlibDecoder as FlateZlibDecoder};
 use flate2::write::{DeflateEncoder as FlateDeflateEncoder, GzEncoder as FlateGzEncoder, ZlibEncoder as FlateZlibEncoder};
-use js_sys::{Function, Object, Reflect, Uint8Array};
+use js_sys::{Date, Function, Object, Reflect, Uint8Array};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{AbortSignal, Blob, BlobPropertyBag, ReadableStream, ReadableStreamDefaultReader};
 use brotli::enc::BrotliEncoderParams;
 use brotli::{CompressorWriter as BrotliCompressorWriter, Decompressor as BrotliDecompressor};
 use zip::{ZipWriter, ZipArchive, write::FileOptions, CompressionMethod as ZipCompressionMethod};
-use time::OffsetDateTime;
 use crypt_::{CryptoService, Config, SecureBytes, CryptoError};
 use bytes::{Bytes, BytesMut};
 
@@ -698,6 +696,10 @@ impl StreamArchiver {
         }
     }
 
+    fn get_current_timestamp() -> u64 {
+        (Date::now() / 1000.0) as u64
+    }
+
     fn create_archive(&self, files: Vec<ArchiveFile>) -> Result<Vec<u8>, ArchiveError> {
         let mut cursor = Cursor::new(Vec::new());
         match self.config.archive_format {
@@ -713,14 +715,24 @@ impl StreamArchiver {
                 };
                 for file in files {
                     self.check_aborted()?;
-                    let mtime = file.modified_time.unwrap_or_else(|| {
-                        SystemTime::now()
-                            .duration_since(UNIX_EPOCH)
-                            .unwrap()
-                            .as_secs()
-                    });
-                    let odt = OffsetDateTime::from_unix_timestamp(mtime as i64).unwrap_or(OffsetDateTime::UNIX_EPOCH);
-                    let zip_time = zip::DateTime::try_from(odt).unwrap_or(zip::DateTime::default());
+                    let mtime = file.modified_time.unwrap_or_else(Self::get_current_timestamp);
+                    
+                    let seconds = mtime % 60;
+                    let minutes = (mtime / 60) % 60;
+                    let hours = (mtime / 3600) % 24;
+                    let days = (mtime / 86400) % 31 + 1;
+                    let months = (mtime / 2678400) % 12 + 1;
+                    let years = (mtime / 31536000) + 1980;
+                    
+                    let zip_time = zip::DateTime::from_date_and_time(
+                        years as u16,
+                        months as u8,
+                        days as u8,
+                        hours as u8,
+                        minutes as u8,
+                        seconds as u8
+                    ).unwrap_or_default();
+                    
                     let options = FileOptions::default()
                         .compression_method(method)
                         .unix_permissions(file.permissions.unwrap_or(0o644))
@@ -753,11 +765,13 @@ impl StreamArchiver {
                     let mut file = zip.by_index(i)?;
                     let mut buffer = Vec::with_capacity(file.size() as usize);
                     file.read_to_end(&mut buffer)?;
-                    let mtime = file.last_modified().to_time().ok().map(|t| t.unix_timestamp() as u64);
+                    let modified_time = file.last_modified().to_time()
+                        .map(|t| t.unix_timestamp() as u64)
+                        .unwrap_or_else(|_| Self::get_current_timestamp());
                     files.push(ArchiveFile {
                         name: file.name().to_string(),
                         data: Bytes::from(buffer),
-                        modified_time: mtime,
+                        modified_time: Some(modified_time),
                         permissions: file.unix_mode().map(|m| m as u32),
                         checksum: None,
                     });
@@ -777,7 +791,7 @@ impl StreamArchiver {
     }
 
     pub async fn archive_files(&self, files: Vec<ArchiveFile>) -> Result<Vec<u8>, JsValue> {
-        let start_time = js_sys::Date::now();
+        let start_time = Date::now();
         self.check_aborted()?;
 
         let total_size: usize = files.iter().map(|f| f.data.len()).sum();
@@ -825,14 +839,14 @@ impl StreamArchiver {
             output = encrypted.to_vec();
         }
 
-        let end_time = js_sys::Date::now();
+        let end_time = Date::now();
         self.report_metrics(start_time, end_time, total_size, output.len())?;
 
         Ok(output)
     }
 
     pub async fn unarchive_files(&self, data: &[u8]) -> Result<Vec<ArchiveFile>, JsValue> {
-        let start_time = js_sys::Date::now();
+        let start_time = Date::now();
         self.check_aborted()?;
 
         if let Some(limit) = self.config.memory_limit {
@@ -900,7 +914,7 @@ impl StreamArchiver {
         let files = self.extract_archive(&buffer)?;
 
         let output_size: usize = files.iter().map(|f| f.data.len()).sum();
-        let end_time = js_sys::Date::now();
+        let end_time = Date::now();
         self.report_metrics(start_time, end_time, total_size, output_size)?;
 
         Ok(files)
@@ -931,7 +945,7 @@ impl StreamArchiver {
                 message: "Zip not supported for streaming input".to_string() 
             }.into());
         }
-        let start_time = js_sys::Date::now();
+        let start_time = Date::now();
         self.check_aborted()?;
 
         let reader = stream.get_reader().unchecked_into::<ReadableStreamDefaultReader>();
@@ -987,14 +1001,14 @@ impl StreamArchiver {
             output = encrypted.to_vec();
         }
 
-        let end_time = js_sys::Date::now();
+        let end_time = Date::now();
         self.report_metrics(start_time, end_time, total_size, output.len())?;
 
         Ok(output)
     }
 
     pub async fn unarchive_stream(&self, stream: ReadableStream) -> Result<Vec<ArchiveFile>, JsValue> {
-        let start_time = js_sys::Date::now();
+        let start_time = Date::now();
         self.check_aborted()?;
 
         let reader = stream.get_reader().unchecked_into::<ReadableStreamDefaultReader>();
@@ -1083,7 +1097,7 @@ impl StreamArchiver {
         let files = self.extract_archive(&buffer)?;
 
         let output_size: usize = files.iter().map(|f| f.data.len()).sum();
-        let end_time = js_sys::Date::now();
+        let end_time = Date::now();
         self.report_metrics(start_time, end_time, total_size, output_size)?;
 
         Ok(files)
@@ -1102,7 +1116,6 @@ pub async fn archive_files_blob(files: Vec<ArchiveFile>, config: ArchiveConfig, 
 
     let compressed = archiver.archive_files(files).await?;
 
-    #[allow(unused_mut)]
     let mut options = BlobPropertyBag::new();
     options.set_type(match archiver.config.algorithm {
         CompressionAlgorithm::Gzip => "application/gzip",
@@ -1146,7 +1159,6 @@ pub async fn archive_stream(stream: ReadableStream, config: ArchiveConfig, progr
 
     let compressed = archiver.archive_stream(stream).await?;
 
-    #[allow(unused_mut)]
     let mut options = BlobPropertyBag::new();
     options.set_type(match archiver.config.algorithm {
         CompressionAlgorithm::Gzip => "application/gzip",

@@ -1,0 +1,73 @@
+   Compiling archive v0.1.0 (/workspaces/Rustmd/archive)
+warning: constant `MIN_COMPRESSION_LEVEL` is never used
+  --> src/lib.rs:25:7
+   |
+25 | const MIN_COMPRESSION_LEVEL: i32 = -7;
+   |       ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: constant `MAX_COMPRESSION_LEVEL` is never used
+  --> src/lib.rs:26:7
+   |
+26 | const MAX_COMPRESSION_LEVEL: i32 = 22;
+   |       ^^^^^^^^^^^^^^^^^^^^^
+
+warning: fields `os_code` and `preset` are never read
+   --> src/lib.rs:409:5
+    |
+403 | pub struct ArchiveConfig {
+    |            ------------- fields in this struct
+...
+409 |     os_code: Option<u32>,
+    |     ^^^^^^^
+...
+415 |     preset: Option<String>,
+    |     ^^^^^^
+
+warning: field `buffer_pool` is never read
+   --> src/lib.rs:441:5
+    |
+439 | struct CompressionContext {
+    |        ------------------ field in this struct
+440 |     encoder: CompressionEncoder,
+441 |     buffer_pool: Vec<BytesMut>,
+    |     ^^^^^^^^^^^
+
+warning: methods `get_buffer` and `return_buffer` are never used
+   --> src/lib.rs:480:8
+    |
+444 | impl CompressionContext {
+    | ----------------------- methods in this implementation
+...
+480 |     fn get_buffer(&mut self, size: usize) -> BytesMut {
+    |        ^^^^^^^^^^
+...
+486 |     fn return_buffer(&mut self, mut buffer: BytesMut) {
+    |        ^^^^^^^^^^^^^
+
+warning: fields `buffer_pool` and `dict` are never read
+   --> src/lib.rs:536:5
+    |
+534 | struct DecompressionContext<'a> {
+    |        -------------------- fields in this struct
+535 |     decoder: CompressionDecoder<'a>,
+536 |     buffer_pool: Vec<BytesMut>,
+    |     ^^^^^^^^^^^
+537 |     dict: Option<Vec<u8>>,
+    |     ^^^^
+
+warning: methods `get_buffer` and `return_buffer` are never used
+   --> src/lib.rs:569:8
+    |
+540 | impl<'a> DecompressionContext<'a> {
+    | --------------------------------- methods in this implementation
+...
+569 |     fn get_buffer(&mut self, size: usize) -> BytesMut {
+    |        ^^^^^^^^^^
+...
+575 |     fn return_buffer(&mut self, mut buffer: BytesMut) {
+    |        ^^^^^^^^^^^^^
+
+warning: `archive` (lib) generated 7 warnings
+    Finished `release` profile [optimized] target(s) in 16.79s

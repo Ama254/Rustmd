@@ -2,42 +2,43 @@
 name = "archive"
 version = "0.1.0"
 edition = "2021"
+description = "A comprehensive archive and compression library with encryption support"
+license = "MIT OR Apache-2.0"
+authors = ["Your Name <your.email@example.com>"]
+repository = "https://github.com/yourusername/archive"
+keywords = ["compression", "archive", "encryption", "wasm"]
+categories = ["compression", "cryptography", "wasm"]
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
-js-sys = "0.3"
-web-sys = { version = "0.3", features = ["AbortController", "ReadableStream"] }
-wasm-bindgen-futures = "0.4"
-
-serde = { version = "1.0", features = ["derive"] }
-serde-wasm-bindgen = "0.4"
-
-uuid = { version = "1.0", features = ["v4", "wasm-bindgen"] }
-zeroize = { version = "1.5", features = ["zeroize_derive"] }
-log = "0.4"
-
-zip = { version = "0.6", default-features = false, features = ["deflate"] }
-tar = "0.4"
-flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
-zstd = { version = "0.11", default-features = false }
-xz2 = "0.1"
-
 aes-gcm = "0.10"
-argon2 = { version = "0.5", default-features = false }
+argon2 = "0.5"
+brotli = "3.3"
+bytes = "1.0"
+console_error_panic_hook = "0.1"
+flate2 = "1.0"
+getrandom = { version = "0.2", features = ["js"] }
+js-sys = "0.3"
 pbkdf2 = "0.12"
-hmac = "0.12"
 sha2 = "0.10"
 subtle = "2.5"
-getrandom = { version = "0.2", features = ["js"] }
+time = "0.3"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = ["AbortSignal", "Blob", "BlobPropertyBag", "ReadableStream", "ReadableStreamDefaultReader"] }
+zeroize = { version = "1.6", features = ["derive"] }
+zip = { version = "0.6", default-features = false, features = ["deflate", "time"] }
 
-blake3 = "1.3"
-crc32fast = "1.3"
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[features]
+default = []
+wasm = ["getrandom/js"]
 
 [profile.release]
-opt-level = "s"
 lto = true
+opt-level = 3
 codegen-units = 1
-panic = "abort"

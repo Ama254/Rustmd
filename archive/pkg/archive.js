@@ -305,7 +305,7 @@ export function init() {
 }
 
 function __wbg_adapter_38(arg0, arg1) {
-    wasm._dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hc249e8198f9d22f7(arg0, arg1);
+    wasm._dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h9170a9f8a16575db(arg0, arg1);
 }
 
 function __wbg_adapter_41(arg0, arg1, arg2) {

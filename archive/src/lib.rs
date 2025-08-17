@@ -17,10 +17,12 @@ use crypt_::{CryptoService, Config, SecureBytes, CryptoError};
 use bytes::{Bytes, BytesMut};
 
 mod crypt_;
-
+#[allow(dead_code)]
 const DEFAULT_CHUNK_SIZE: usize = 64 * 1024;
 const MAX_MEMORY_LIMIT: usize = 256 * 1024 * 1024;
+#[allow(dead_code)]
 const MIN_COMPRESSION_LEVEL: i32 = -7;
+#[allow(dead_code)]
 const MAX_COMPRESSION_LEVEL: i32 = 22;
 
 #[wasm_bindgen]
@@ -397,6 +399,7 @@ impl ArchiveConfigBuilder {
     }
 }
 
+#[allow(dead_code)]
 #[wasm_bindgen]
 pub struct ArchiveConfig {
     level: i32,
@@ -434,6 +437,7 @@ impl ArchiveConfig {
     }
 }
 
+#[allow(dead_code)]
 struct CompressionContext {
     encoder: CompressionEncoder,
     buffer_pool: Vec<BytesMut>,
@@ -475,12 +479,14 @@ impl CompressionContext {
         })
     }
 
+    #[allow(dead_code)]
     fn get_buffer(&mut self, size: usize) -> BytesMut {
         self.buffer_pool.pop()
             .filter(|b| b.capacity() >= size)
             .unwrap_or_else(|| BytesMut::with_capacity(size))
     }
 
+    #[allow(dead_code)]
     fn return_buffer(&mut self, mut buffer: BytesMut) {
         buffer.clear();
         self.buffer_pool.push(buffer);
@@ -529,6 +535,7 @@ impl CompressionEncoder {
     }
 }
 
+#[allow(dead_code)]
 struct DecompressionContext<'a> {
     decoder: CompressionDecoder<'a>,
     buffer_pool: Vec<BytesMut>,
@@ -564,12 +571,14 @@ impl<'a> DecompressionContext<'a> {
         })
     }
 
+    #[allow(dead_code)]
     fn get_buffer(&mut self, size: usize) -> BytesMut {
         self.buffer_pool.pop()
             .filter(|b| b.capacity() >= size)
             .unwrap_or_else(|| BytesMut::with_capacity(size))
     }
 
+    #[allow(dead_code)]
     fn return_buffer(&mut self, mut buffer: BytesMut) {
         buffer.clear();
         self.buffer_pool.push(buffer);
@@ -1116,7 +1125,7 @@ pub async fn archive_files_blob(files: Vec<ArchiveFile>, config: ArchiveConfig, 
 
     let compressed = archiver.archive_files(files).await?;
 
-    let mut options = BlobPropertyBag::new();
+    let options = BlobPropertyBag::new();
     options.set_type(match archiver.config.algorithm {
         CompressionAlgorithm::Gzip => "application/gzip",
         CompressionAlgorithm::Zlib => "application/zlib",
@@ -1159,7 +1168,7 @@ pub async fn archive_stream(stream: ReadableStream, config: ArchiveConfig, progr
 
     let compressed = archiver.archive_stream(stream).await?;
 
-    let mut options = BlobPropertyBag::new();
+    let options = BlobPropertyBag::new();
     options.set_type(match archiver.config.algorithm {
         CompressionAlgorithm::Gzip => "application/gzip",
         CompressionAlgorithm::Zlib => "application/zlib",

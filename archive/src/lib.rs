@@ -647,7 +647,6 @@ impl<'a> BufRead for TrackingReader<'a> {
         self.pos.fetch_add(amt, Ordering::SeqCst);
     }
 }
-
 #[wasm_bindgen]
 pub struct StreamArchiver {
     config: ArchiveConfig,
@@ -774,9 +773,14 @@ impl StreamArchiver {
                     let mut file = zip.by_index(i)?;
                     let mut buffer = Vec::with_capacity(file.size() as usize);
                     file.read_to_end(&mut buffer)?;
-                    let modified_time = file.last_modified().to_time()
-                        .map(|t| t.unix_timestamp() as u64)
-                        .unwrap_or_else(|_| Self::get_current_timestamp());
+                    let dt = file.last_modified();
+                    let js_date = Date::new_with_year_month_day_hr_min_sec(dt.year() as u32, (dt.month() - 1) as i32, dt.day() as i32, dt.hour() as i32, dt.minute() as i32, dt.second() as i32);
+                    let time_ms = js_date.get_time();
+                    let modified_time = if time_ms.is_nan() {
+                        Self::get_current_timestamp()
+                    } else {
+                        (time_ms / 1000.0) as u64
+                    };
                     files.push(ArchiveFile {
                         name: file.name().to_string(),
                         data: Bytes::from(buffer),

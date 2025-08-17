@@ -28,7 +28,7 @@ wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["AbortSignal", "Blob", "BlobPropertyBag", "ReadableStream", "ReadableStreamDefaultReader"] }
 zeroize = { version = "1.6", features = ["derive"] }
-zip = { version = "0.6", default-features = false, features = ["deflate", "time"] }
+zip = { version = "0.6", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
